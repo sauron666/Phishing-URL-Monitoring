@@ -1,4 +1,4 @@
-# Advanced Phishing URL Checker
+# Phishing URL Monitoring
 
 A Python-based SOC tool for monitoring and analyzing phishing URLs with a Tkinter GUI. Features include URL status checking, redirect tracing, risk analysis, VirusTotal and URLScan integration, auto-monitoring, and optional email notifications for status changes.
 
@@ -15,8 +15,8 @@ A Python-based SOC tool for monitoring and analyzing phishing URLs with a Tkinte
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/phishing-url-checker.git
-   cd phishing-url-checker
+   git clone https://github.com/sauron666/Phishing-URL-Monitoring.git
+   cd Phishing-URL-Monitoring
    ```
 2. Install dependencies:
    ```bash
@@ -59,7 +59,7 @@ Create a `config.json` file in the project root with the following structure:
 ## Usage
 1. Run the application:
    ```bash
-   python phishmon2.py
+   python phishing_monitor.py
    ```
 2. **GUI Overview**:
    - **Check URLs**: Enter a single URL or text containing URLs, or import a file.
@@ -77,18 +77,10 @@ Create a `config.json` file in the project root with the following structure:
 - **Database**: Stores data in `phishing_urls.db`. Logs are written to `phishing_monitor.log` with rotation.
 - **Performance**: Optimized for nonstop monitoring with batch processing and thread-safe GUI updates.
 
-## Contributing
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/your-feature`).
-3. Commit changes (`git commit -m "Add your feature"`).
-4. Push to the branch (`git push origin feature/your-feature`).
-5. Open a pull request.
-
-Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) and report issues via GitHub Issues.
 
 ## License
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 - Built with [Tkinter](https://docs.python.org/3/library/tkinter.html), [aiohttp](https://docs.aiohttp.org/), and [SQLite](https://www.sqlite.org/).
-- Inspired by SOC needs for phishing URL monitoring.
+- Inspired by the SOC needs for phishing URL monitoring.
