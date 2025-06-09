@@ -108,7 +108,7 @@ class PhishingURLChecker:
         self.log_info("Application started")
 
     def init_db(self):
-        """Initialize SQLite database with indexing"""
+        """Initialize SQLite database with migration for external_checks_timestamp"""
         try:
             with sqlite3.connect(self.db_file) as conn:
                 cursor = conn.cursor()
@@ -126,6 +126,11 @@ class PhishingURLChecker:
                         comments TEXT
                     )
                 ''')
+                cursor.execute("PRAGMA table_info(urls)")
+                columns = [col[1] for col in cursor.fetchall()]
+                if 'external_checks_timestamp' not in columns:
+                    cursor.execute('ALTER TABLE urls ADD COLUMN external_checks_timestamp TEXT')
+                    self.log_info("Migrated database: Added external_checks_timestamp column")
                 cursor.execute('CREATE INDEX IF NOT EXISTS idx_url ON urls (url)')
                 cursor.execute('CREATE INDEX IF NOT EXISTS idx_last_checked ON urls (last_checked)')
                 conn.commit()
@@ -875,7 +880,7 @@ class PhishingURLChecker:
             msg['From'] = self.smtp_config.get('user', '')
             msg['To'] = self.smtp_config.get('recipient', '')
             
-            with smtplib.SMTP(self.smtp_config.get('host', ''), self.smtp_config.get('port', 587)) as server:
+            with smtplib.SMTP(self.smtp_config.get('host', ''), self.smtp_config.get('port', '')) as server:
                 server.starttls()
                 server.login(self.smtp_config.get('user', ''), self.smtp_config.get('password', ''))
                 server.send_message(msg)
