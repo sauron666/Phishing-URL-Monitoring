@@ -76,6 +76,9 @@ Create a `config.json` file in the project root with the following structure:
 - **Email Notifications**: Require valid SMTP settings. Test your SMTP configuration before enabling.
 - **Database**: Stores data in `phishing_urls.db`. Logs are written to `phishing_monitor.log` with rotation.
 - **Performance**: Optimized for nonstop monitoring with batch processing and thread-safe GUI updates.
+  Example Screenshot
+
+  ![image](https://github.com/user-attachments/assets/9fac23c9-0a16-4a48-8386-bda1605b8176)
 
 
 ## License
