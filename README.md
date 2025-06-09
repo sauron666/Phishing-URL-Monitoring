@@ -34,7 +34,7 @@ Create a `config.json` file in the project root with the following structure:
   },
   "smtp_config": {
     "host": "smtp.example.com",
-    "port": 587,
+    "port": "587",
     "user": "your_email@example.com",
     "password": "your_password",
     "recipient": "recipient@example.com"
