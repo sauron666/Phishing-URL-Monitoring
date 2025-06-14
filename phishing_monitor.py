@@ -54,6 +54,7 @@ class PhishingURLChecker:
         self.auto_check_running = False
         self.auto_remove_inactive = False
         self.email_notifications_enabled = False
+        self.telegram_notifications_enabled = False
         self.db_pool = ThreadPoolExecutor(max_workers=1)
         self.url_queue = queue.Queue()
         
@@ -83,6 +84,13 @@ class PhishingURLChecker:
                 "password": "",
                 "recipient": "",
                 "from_name": "Phishing Monitor"
+            },
+            "telegram_config": {
+                "bot_token": "123456789:ABCdefGHIjkLmNoPQRstuVWxyz123456789",
+                "chat_ids": [
+                "123456789",
+                "-1009876543210"
+                ]
             },
             "check_interval": 7200,
             "cache_ttl": 86400,
@@ -222,7 +230,7 @@ class PhishingURLChecker:
         ttk.Button(action_frame, text="Remove Inactive", command=self.remove_inactive_urls).pack(side=tk.LEFT, padx=5)
         ttk.Button(action_frame, text="Auto-check Toggle", command=self.toggle_auto_check).pack(side=tk.LEFT, padx=5)
         ttk.Button(action_frame, text="Auto-remove Toggle", command=self.toggle_auto_remove).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Email Notify Toggle", command=self.toggle_email_notifications).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Telegram Notify Toggle", command=self.toggle_telegram_notifications).pack(side=tk.LEFT, padx=5)
         ttk.Button(action_frame, text="Export CSV", command=lambda: self.export_history("csv")).pack(side=tk.LEFT, padx=5)
         ttk.Button(action_frame, text="Export JSON", command=lambda: self.export_history("json")).pack(side=tk.LEFT, padx=5)
         ttk.Button(action_frame, text="Add Comment", command=self.add_comment).pack(side=tk.LEFT, padx=5)
@@ -239,7 +247,15 @@ class PhishingURLChecker:
         """Log error with performance metrics"""
         memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
         logging.error(json.dumps({"message": message, "memory_mb": memory}))
-
+        
+    def toggle_telegram_notifications(self):
+        """Toggle Telegram notifications for status changes"""
+        self.telegram_notifications_enabled = not self.telegram_notifications_enabled
+        status = "ON" if self.telegram_notifications_enabled else "OFF"
+        self.status_var.set(f"Telegram notifications: {status}")
+        messagebox.showinfo("Info", f"Telegram notifications: {status}")
+        self.log_info(f"Telegram notifications set to {status}")
+    
     async def check_url_async(self, url, session, retries=3, backoff_factor=1):
         """Asynchronously check if URL is active with retry logic"""
         for attempt in range(retries):
@@ -682,7 +698,7 @@ class PhishingURLChecker:
                         message = f"Status changed for {url}: {old_status} → {status}"
                         if is_auto_check:
                             self.log_info(message)
-                            if self.email_notifications_enabled:
+                            if self.telegram_notifications_enabled
                                 # Only send email for significant changes
                                 if (old_status == "Active" and status != "Active") or \
                                    (old_status != "Active" and status == "Active"):
@@ -902,9 +918,8 @@ class PhishingURLChecker:
                         self.root.after(0, lambda: self.tree.delete(item))
                         cursor.execute("DELETE FROM urls WHERE url = ?", (url,))
                         self.log_info(f"URL removed: {url}")
-                        if self.email_notifications_enabled:
-                            asyncio.create_task(
-                                self.send_email_notification(
+                        if self.telegram_notifications_enabled:
+                            self.send_telegram_notification(...)(
                                     f"Removed inactive URL (older than {self.inactive_threshold} days):\n\n{url}",
                                     "CLEANUP"
                                 )
@@ -944,6 +959,34 @@ class PhishingURLChecker:
         self.root.after(0, lambda: messagebox.showinfo("Info", f"Email notifications: {status}"))
         self.log_info(f"Email notifications set to {status}")
 
+    def send_telegram_notification(self, message: str) -> bool:
+        try:
+            config = self.config.get("telegram_config", {})
+            bot_token = config.get("bot_token", "")
+            chat_ids = config.get("chat_ids", [])
+    
+            if not bot_token or not chat_ids:
+                self.log_error("Telegram configuration missing")
+                return False
+    
+            for chat_id in chat_ids:
+                url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+                payload = {
+                    "chat_id": chat_id,
+                    "text": f"Phishing Monitor Alert:\n\n{message}",
+                    "parse_mode": "HTML"
+                }
+                response = requests.post(url, data=payload, timeout=10)
+                if response.status_code != 200:
+                    self.log_error(f"Telegram error: {response.text}")
+                    return False
+            self.log_info(f"Telegram notification sent: {message}")
+            return True
+        except Exception as e:
+            self.log_error(f"Telegram send failed: {str(e)}")
+            return False
+
+    
     async def send_email_notification(self, message, subject_prefix="ALERT"):
         """Enhanced email notification with HTML formatting and error handling"""
         if not self.email_notifications_enabled or not self.smtp_config.get("host"):
@@ -1007,9 +1050,8 @@ class PhishingURLChecker:
             except Exception as e:
                 self.log_error(f"Auto-check loop error: {str(e)}")
                 # Try to send email notification about the error
-                if self.email_notifications_enabled:
-                    asyncio.create_task(
-                        self.send_email_notification(
+                if self.telegram_notifications_enabled:
+                    self.send_telegram_notification(
                             f"Auto-check loop encountered an error:\n\n{str(e)}\n\nTrying to continue...",
                             "ERROR"
                         )
