@@ -698,16 +698,12 @@ class PhishingURLChecker:
                         message = f"Status changed for {url}: {old_status} → {status}"
                         if is_auto_check:
                             self.log_info(message)
-                            if self.telegram_notifications_enabled
-                                # Only send email for significant changes
+                            if self.telegram_notifications_enabled:
                                 if (old_status == "Active" and status != "Active") or \
                                    (old_status != "Active" and status == "Active"):
-                                    subject_prefix = "URGENT" if status == "Active" else "INFO"
-                                    asyncio.create_task(
-                                        self.send_email_notification(
-                                            f"Phishing URL status change detected!\n\n{message}\n\nCurrent risk level: {risk_level}",
-                                            subject_prefix
-                                        )
+                                    prefix = "🟢" if status == "Active" else "🔴"
+                                    self.send_telegram_notification(
+                                        f"{prefix} Status changed for {url}:\n{old_status} → {status}\nRisk Level: {risk_level}"
                                     )
                         else:
                             self.root.after(0, lambda: self.show_notification(message))
@@ -919,7 +915,7 @@ class PhishingURLChecker:
                         cursor.execute("DELETE FROM urls WHERE url = ?", (url,))
                         self.log_info(f"URL removed: {url}")
                         if self.telegram_notifications_enabled:
-                            self.send_telegram_notification(...)(
+                            self.send_telegram_notification(
                                     f"Removed inactive URL (older than {self.inactive_threshold} days):\n\n{url}",
                                     "CLEANUP"
                                 )
@@ -1052,9 +1048,7 @@ class PhishingURLChecker:
                 # Try to send email notification about the error
                 if self.telegram_notifications_enabled:
                     self.send_telegram_notification(
-                            f"Auto-check loop encountered an error:\n\n{str(e)}\n\nTrying to continue...",
-                            "ERROR"
-                        )
+                        f"❗ Auto-check loop encountered an error:\n{str(e)}\n\nTrying to continue..."
                     )
                 time.sleep(60)  # Wait before retrying to prevent tight loop on failure
 
