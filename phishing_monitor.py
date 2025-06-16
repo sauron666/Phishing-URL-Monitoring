@@ -21,6 +21,8 @@ from PIL import Image, ImageTk
 import validators
 from concurrent.futures import ThreadPoolExecutor
 import psutil
+import requests
+
 
 # Configuration file
 CONFIG_FILE = "config.json"
@@ -45,7 +47,6 @@ class PhishingURLChecker:
             "Low": "#ccffcc",
             "Inactive": "#e6e6e6"
         })
-        
         # Variables
         self.urls = []
         self.history_file = "phishing_url_history.csv"
@@ -86,10 +87,10 @@ class PhishingURLChecker:
                 "from_name": "Phishing Monitor"
             },
             "telegram_config": {
-                "bot_token": "123456789:ABCdefGHIjkLmNoPQRstuVWxyz123456789",
+                "bot_token": "",
                 "chat_ids": [
-                "123456789",
-                "-1009876543210"
+                "",
+                ""
                 ]
             },
             "check_interval": 7200,
@@ -918,7 +919,6 @@ class PhishingURLChecker:
                             self.send_telegram_notification(
                                     f"Removed inactive URL (older than {self.inactive_threshold} days):\n\n{url}",
                                     "CLEANUP"
-                                )
                             )
                     conn.commit()
             except Exception as e:
